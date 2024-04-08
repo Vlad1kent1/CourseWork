@@ -1,0 +1,4 @@
+﻿  lab_2.cpp
+D:\Компютерні мережі\lab_2\lab_2.cpp(25,74): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\Компютерні мережі\lab_2\lab_2.cpp(45,74): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+  lab_2.vcxproj -> D:\Компютерні мережі\lab_2\x64\Debug\lab_2.exe
