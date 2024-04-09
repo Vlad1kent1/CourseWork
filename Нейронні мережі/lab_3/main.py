@@ -1,161 +1,78 @@
 import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = "0"
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from keras.models import Sequential
-from keras.layers import LSTM, RepeatVector,TimeDistributed, Dense
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import Model
+from tensorflow.keras.layers import Input, LSTM, Dense, RepeatVector, TimeDistributed
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = "0"
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+
+# Завантаження та попередня обробка даних
 df = pd.read_csv("https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv")
 df["Date"] = pd.to_datetime(df["Date"])
 df = df.set_index("Date")
-print(df.head())
-df.plot()
 
-max_value = max(df['Temp'])
-min_value = min(df['Temp'])
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(df[['Temp']])
 
-def normalize_data(data):
-    return (data - min_value) / (max_value - min_value)
+# Функція для створення датасету
+def create_dataset(data, n_past, n_future):
+    X, y = [], []
+    for i in range(n_past, len(data) - n_future +1):
+        X.append(data[i-n_past:i, 0])
+        y.append(data[i:i+n_future, 0])
+    return np.array(X), np.array(y)
 
-def denormalize_data(data):
-    return data * (max_value - min_value) + min_value
-
-normalized_df = normalize_data(df['Temp'])
-
-n_features = 1
-n_future = 7
 n_past = 14
+n_future = 7
+n_features = 1
 
-x = []
-for i in range(len(normalized_df) - n_past - 1):
-    window = normalized_df.iloc[i:i+n_past].to_numpy().reshape(-1, 1)
-    x.append(window)
-x = np.array(x)
+X, y = create_dataset(scaled_data, n_past, n_future)
+X = X.reshape((X.shape[0], X.shape[1], n_features))
+y = y.reshape((y.shape[0], y.shape[1], n_features))
 
-y = []
-for i in range(n_past, len(normalized_df)-n_future+1):
-    window = normalized_df.iloc[i:i+n_future].to_numpy().reshape(-1, 1)
-    y.append(window)
-y = np.array(y)
+# Розділення даних
+train_size = int(len(X) * 0.8)
+val_size = int(len(X) * 0.1)
+test_size = len(X) - train_size - val_size
 
-train_size = 0.8
-validation_size = 0.1
-test_size = 0.1
+X_train, y_train = X[:train_size], y[:train_size]
+X_val, y_val = X[train_size:train_size+val_size], y[train_size:train_size+val_size]
+X_test, y_test = X[train_size+val_size:], y[train_size+val_size:]
 
-indices = np.arange(min(len(x),len(y)))
-np.random.shuffle(indices)
-train_index = int(train_size * len(indices))
-val_index = int((train_size + validation_size) * len(indices))
+# Побудова моделі без використання Sequential API
+inputs = Input(shape=(n_past, n_features))
+lstm1 = LSTM(100, activation='relu', return_sequences=True)(inputs)
+lstm2 = LSTM(100, activation='relu', return_sequences=False)(lstm1)
+repeat_vector = RepeatVector(n_future)(lstm2)
+lstm3 = LSTM(100, activation='relu', return_sequences=True)(repeat_vector)
+output = TimeDistributed(Dense(1))(lstm3)
+model = Model(inputs=inputs, outputs=output)
 
-train_indices = indices[:train_index]
-val_indices = indices[train_index:val_index]
-test_indices = indices[val_index:]
-
-x_train, y_train = x[train_indices], y[train_indices]
-x_val, y_val = x[val_indices], y[val_indices]
-x_test, y_test = x[test_indices], y[test_indices]
-
-print("Number of samples in training set:", len(x_train))
-print("Number of samples in validation set:", len(x_val))
-print("Number of samples in test set:", len(x_test))
-
-print(x_train.shape)
-print(x_test.shape)
-print(x_val.shape)
-
-print(y_train.shape)
-print(y_test.shape)
-print(y_val.shape)
-
-
-batch_size = x_train.shape[0]
-epochs = 1000
-hidden_layer = 100
-
-model = Sequential()
-model.add(LSTM(100, activation='relu', input_shape=(n_past, n_features), return_sequences=True))
-model.add(LSTM(100, activation='relu', return_sequences=False))
-model.add(RepeatVector(n_future))
-model.add(LSTM(100, activation='relu', return_sequences=True))
-model.add(TimeDistributed(Dense(1)))
 model.compile(optimizer='adam', loss='mse')
 model.summary()
 
-history = model.fit(x_train, y_train, epochs=epochs, validation_data=(x_test, y_test))
+# Тренування моделі
+model.fit(X_train, y_train, epochs=1000, validation_data=(X_val, y_val), verbose=2)
 
+# Прогнозування
+predictions = model.predict(X_test)
+predictions = scaler.inverse_transform(predictions.reshape(-1, 1)).reshape(-1, n_future)
+true_y_test = scaler.inverse_transform(y_test.reshape(-1, 1)).reshape(-1, n_future)
+
+# Визначення та друк метрик
+mape = np.mean(np.abs((true_y_test[:, 0] - predictions[:, 0]) / true_y_test[:, 0])) * 100
+rmse = np.sqrt(mean_squared_error(true_y_test[:, 0], predictions[:, 0]))
+ame = mean_absolute_error(true_y_test[:, 0], predictions[:, 0])
+
+print(f"MAPE: {mape}, RMSE: {rmse}, AME: {ame}")
+
+# Візуалізація результатів
 plt.figure(figsize=(10, 6))
-plt.plot(history.history['loss'], label='Training Loss')
-plt.plot(history.history['val_loss'], label='Validation Loss')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Training and Validation Loss over Time')
+plt.plot(true_y_test[:, 0], label='True')
+plt.plot(predictions[:, 0], label='Predicted')
 plt.legend()
-plt.show()
-
-predictions = []
-for i, x in enumerate(x_val):
-    x = x.reshape(1, n_past, 1)
-    predicted = denormalize_data(model.predict(x)).flatten()
-    predictions.append(predicted)
-    real = denormalize_data(y_val[i].flatten())
-
-    print(f"MAPE: {np.mean(np.abs((real - predicted) / real)) * 100}")
-    print(f"RMSE: {np.sqrt(np.mean((real - predicted) ** 2))}")
-    print(f"AME: {np.mean(np.abs(real - predicted))}")
-
-    plt.plot(predicted, label='Predicted Data')
-    plt.plot(real, label='Real Data')
-    plt.xlabel('Time Step')
-    plt.ylabel('Number of Temp')
-    plt.legend()
-    plt.show()
-
-Temp_values = denormalize_data(normalize_data(df['Temp'].values))
-predicted_values = []
-
-for i, p in enumerate(predictions):
-    index = val_indices[i] + n_past
-    x_values = [j for j in range(index,index+n_future)]
-    plt.figure(figsize=(10, 6))
-    plt.plot(Temp_values)
-    plt.plot(x_values,p, label=f"Prediction {i}")
-    plt.plot(x_values,denormalize_data(y_val[i].flatten()), label=f"Actual data {i}")
-    plt.xlabel('Time Step')
-    plt.ylabel('Number of Temp')
-    plt.title('All Data and Predictions')
-    plt.legend()
-    plt.show()
-
-plt.figure(figsize=(10, 6))
-plt.plot(Temp_values)
-for i, p in enumerate(predictions):
-    index = val_indices[i] + n_past
-    x_values = [j for j in range(index,index+n_future)]
-    plt.plot(x_values,p, label=f"Prediction {i}", color="red")
-    plt.plot(x_values,denormalize_data(y_val[i].flatten()), label=f"Actual data {i}", color="green")
-
-plt.xlabel('Time Step')
-plt.ylabel('Number of Temp')
-plt.title('All Data and Predictions')
-plt.legend()
-plt.show()
-plt.figure(figsize=(10, 6))
-plt.plot(Temp_values)
-
-input = normalize_data(np.array(Temp_values[-15:]).reshape(1,-1,1))
-y_prediction = denormalize_data(model.predict(input)).flatten()
-x_prediction = [len(Temp_values) + i for i in range(7)]
-plt.plot(x_prediction,y_prediction)
-
-input = normalize_data(np.array([*Temp_values[-8:], *y_prediction]).reshape(1,-1,1))
-y_prediction = denormalize_data(model.predict(input)).flatten()
-x_prediction = [len(Temp_values) + i for i in range(7,14)]
-plt.plot(x_prediction,y_prediction)
-
-plt.xlabel('Time Step')
-plt.ylabel('Number of Temp')
-plt.title('Predictions')
 plt.show()

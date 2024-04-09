@@ -3,20 +3,19 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = "0"
 os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
 import pandas as pd
-import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from keras.models import Sequential, Model
-from keras.layers import LSTM, RepeatVector,TimeDistributed, Dense, Input
+from keras.models import Sequential
+from keras.layers import LSTM, RepeatVector,TimeDistributed, Dense
 
-df = pd.read_csv("https://raw.githubusercontent.com/jbrownlee/Datasets/master/monthly-robberies.csv")
-df["Month"] = pd.to_datetime(df["Month"])
-df = df.set_index("Month")
+df = pd.read_csv("https://raw.githubusercontent.com/jbrownlee/Datasets/master/daily-min-temperatures.csv")
+df["Date"] = pd.to_datetime(df["Date"])
+df = df.set_index("Date")
 print(df.head())
 df.plot()
 
-max_value = max(df['Robberies'])
-min_value = min(df['Robberies'])
+max_value = max(df['Temp'])
+min_value = min(df['Temp'])
 
 def normalize_data(data):
     return (data - min_value) / (max_value - min_value)
@@ -24,11 +23,11 @@ def normalize_data(data):
 def denormalize_data(data):
     return data * (max_value - min_value) + min_value
 
-normalized_df = normalize_data(df['Robberies'])
+normalized_df = normalize_data(df['Temp'])
 
 n_features = 1
-n_future = 10
-n_past = 40
+n_future = 7
+n_past = 14
 
 x = []
 for i in range(len(normalized_df) - n_past - 1):
@@ -71,33 +70,22 @@ print(y_train.shape)
 print(y_test.shape)
 print(y_val.shape)
 
+
 batch_size = x_train.shape[0]
 epochs = 1000
 hidden_layer = 100
 
 model = Sequential()
-model.add(LSTM(hidden_layer, input_shape=(n_past, n_features), return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer))
+model.add(LSTM(100, activation='relu', input_shape=(n_past, n_features), return_sequences=True))
+model.add(LSTM(100, activation='relu', return_sequences=False))
 model.add(RepeatVector(n_future))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
-model.add(LSTM(hidden_layer, return_sequences=True))
+model.add(LSTM(100, activation='relu', return_sequences=True))
+model.add(LSTM(100, activation='relu', return_sequences=True))
 model.add(TimeDistributed(Dense(1)))
 model.compile(optimizer='adam', loss='mse')
 model.summary()
 
-history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(x_test, y_test))
+history = model.fit(x_train, y_train, epochs=epochs, validation_data=(x_test, y_test))
 
 plt.figure(figsize=(10, 6))
 plt.plot(history.history['loss'], label='Training Loss')
@@ -110,49 +98,65 @@ plt.show()
 
 predictions = []
 for i, x in enumerate(x_val):
- x = x.reshape(1, n_past, 1)
- predicted = denormalize_data(model.predict(x)).flatten()
- predictions.append(predicted)
- real = denormalize_data(y_val[i].flatten())
+    x = x.reshape(1, n_past, 1)
+    predicted = denormalize_data(model.predict(x)).flatten()
+    predictions.append(predicted)
+    real = denormalize_data(y_val[i].flatten())
 
- print(f"MAPE: {np.mean(np.abs((real - predicted) / real)) * 100}")
- print(f"RMSE: {np.sqrt(np.mean((real - predicted) ** 2))}")
- print(f"AME: {np.mean(np.abs(real - predicted))}")
+    print(f"MAPE: {np.mean(np.abs((real - predicted) / real)) * 100}")
+    print(f"RMSE: {np.sqrt(np.mean((real - predicted) ** 2))}")
+    print(f"AME: {np.mean(np.abs(real - predicted))}")
 
- plt.plot(predicted, label='Predicted Data')
- plt.plot(real, label='Real Data')
- plt.xlabel('Time Step')
- plt.ylabel('Number of Robberies')
- plt.legend()
- plt.show()
+    plt.plot(predicted, label='Predicted Data')
+    plt.plot(real, label='Real Data')
+    plt.xlabel('Time Step')
+    plt.ylabel('Number of Temp')
+    plt.legend()
+    plt.show()
 
- robberies_values = denormalize_data(normalize_data(df['Robberies'].values))
- predicted_values = []
+sales_values = denormalize_data(normalize_data(df['Temp'].values))
+predicted_values = []
 
- for i, p in enumerate(predictions):
-  index = val_indices[i] + n_past
-  x_values = [j for j in range(index, index + n_future)]
-  plt.figure(figsize=(10, 6))
-  plt.plot(robberies_values)
-  plt.plot(x_values, p, label=f"Prediction {i}")
-  plt.plot(x_values, denormalize_data(y_val[i].flatten()), label=f"Actual data {i}")
-  plt.xlabel('Time Step')
-  plt.ylabel('Number of Robberies')
-  plt.title('All Data and Predictions')
-  plt.legend()
-  plt.show()
+for i, p in enumerate(predictions):
+    index = val_indices[i] + n_past
+    x_values = [j for j in range(index,index+n_future)]
+    plt.figure(figsize=(10, 6))
+    plt.plot(sales_values)
+    plt.plot(x_values,p, label=f"Prediction {i}")
+    plt.plot(x_values,denormalize_data(y_val[i].flatten()), label=f"Actual data {i}")
+    plt.xlabel('Time Step')
+    plt.ylabel('Number of Temp')
+    plt.title('All Data and Predictions')
+    plt.legend()
+    plt.show()
 
- plt.figure(figsize=(10, 6))
- plt.plot(robberies_values)
+plt.figure(figsize=(10, 6))
+plt.plot(sales_values)
+for i, p in enumerate(predictions):
+    index = val_indices[i] + n_past
+    x_values = [j for j in range(index,index+n_future)]
+    plt.plot(x_values,p, label=f"Prediction {i}", color="red")
+    plt.plot(x_values,denormalize_data(y_val[i].flatten()), label=f"Actual data {i}", color="green")
 
- for i, p in enumerate(predictions):
-  index = val_indices[i] + n_past
-  x_values = [j for j in range(index, index + n_future)]
-  plt.plot(x_values, p, label=f"Prediction {i}", color="red")
-  plt.plot(x_values, denormalize_data(y_val[i].flatten()), label=f"Actual data {i}", color="green")
+plt.xlabel('Time Step')
+plt.ylabel('Number of Temp')
+plt.title('All Data and Predictions')
+plt.legend()
+plt.show()
+plt.figure(figsize=(10, 6))
+plt.plot(sales_values)
 
- plt.xlabel('Time Step')
- plt.ylabel('Number of Robberies')
- plt.title('All Data and Predictions')
- plt.legend()
- plt.show()
+input = normalize_data(np.array(sales_values[-15:]).reshape(1,-1,1))
+y_prediction = denormalize_data(model.predict(input)).flatten()
+x_prediction = [len(sales_values) + i for i in range(7)]
+plt.plot(x_prediction,y_prediction)
+
+input = normalize_data(np.array([*sales_values[-8:], *y_prediction]).reshape(1,-1,1))
+y_prediction = denormalize_data(model.predict(input)).flatten()
+x_prediction = [len(sales_values) + i for i in range(7,14)]
+plt.plot(x_prediction,y_prediction)
+
+plt.xlabel('Time Step')
+plt.ylabel('Number of Temp')
+plt.title('Predictions')
+plt.show()
