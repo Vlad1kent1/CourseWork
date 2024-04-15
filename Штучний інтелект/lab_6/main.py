@@ -1,125 +1,114 @@
-import random
+from kivy.app import App
+from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.modalview import ModalView
+from kivy.uix.label import Label
 
-# Функція для відображення полі гри
-def display_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("-" * 9)
 
-# Функція для створення нового пустого поля гри
-def initialize_board():
-    return [[" " for _ in range(3)] for _ in range(3)]
+class TicTacToeBoard:
+    def __init__(self):
+        self.board = [0] * 9
 
-# Функція для перевірки, чи є переможець
-def check_winner(board, player):
-    # Перевірка рядків та стовпців
-    for i in range(3):
-        if all(board[i][j] == player for j in range(3)) or all(board[j][i] == player for j in range(3)):
+    def make_move(self, position, player):
+        if self.board[position] == 0:
+            self.board[position] = player
             return True
-    # Перевірка діагоналей
-    if all(board[i][i] == player for i in range(3)) or all(board[i][2 - i] == player for i in range(3)):
-        return True
-    return False
+        return False
 
-# Функція для отримання списку можливих ходів
-def get_possible_moves(board):
-    return [(i, j) for i in range(3) for j in range(3) if board[i][j] == " "]
+    def check_winner(self):
+        win_combinations = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]
+        for a, b, c in win_combinations:
+            if self.board[a] == self.board[b] == self.board[c] != 0:
+                return self.board[a]
+        if 0 not in self.board:
+            return 'draw'
+        return None
 
-# Функція для ходу гравця
-def player_move(board):
-    while True:
-        row = int(input("Введіть номер рядка (0, 1, або 2): "))
-        col = int(input("Введіть номер стовпця (0, 1, або 2): "))
-        if (row, col) in get_possible_moves(board):
-            return row, col
+
+class TicTacToeApp(App):
+    def build(self):
+        self.title = 'Хрестики-нулики'
+        self.board = TicTacToeBoard()
+        self.current_player = 2
+        self.layout = GridLayout(cols=3)
+        self.buttons = []
+
+        for i in range(9):
+            button = Button(font_size=24)
+            button.bind(on_press=self.button_pressed)
+            self.layout.add_widget(button)
+            self.buttons.append(button)
+
+        return self.layout
+
+    def button_pressed(self, instance):
+        position = self.buttons.index(instance)
+        if self.board.make_move(position, self.current_player):
+            instance.text = 'X' if self.current_player == 2 else 'O'
+            winner = self.board.check_winner()
+            if winner:
+                self.show_winner(winner)
+                return
+            self.current_player = 3 - self.current_player
+            if self.current_player == 2:
+                self.run_ai()
+
+    def run_ai(self):
+        best_move = self.minimax(self.board, True)[1]
+        if best_move is not None:
+            self.button_pressed(self.buttons[best_move])
+
+    def minimax(self, board, maximizing):
+        winner = board.check_winner()
+        if winner:
+            if winner == 'draw':
+                return 0, None
+            else:
+                return (1 if winner == 2 else -1, None)
+
+        if maximizing:
+            best_value = -float('inf')
+            best_move = None
+            for move in range(9):
+                if board.board[move] == 0:
+                    board.board[move] = 2
+                    value = self.minimax(board, False)[0]
+                    board.board[move] = 0
+                    if value > best_value:
+                        best_value = value
+                        best_move = move
+            return best_value, best_move
         else:
-            print("Недопустимий хід. Спробуйте знову.")
+            best_value = float('inf')
+            best_move = None
+            for move in range(9):
+                if board.board[move] == 0:
+                    board.board[move] = 1
+                    value = self.minimax(board, True)[0]
+                    board.board[move] = 0
+                    if value < best_value:
+                        best_value = value
+                        best_move = move
+            return best_value, best_move
 
-# Функція для ходу комп'ютера
-def computer_move(board):
-    _, move = minimax(board, 0, True)
-    return move
+    def show_winner(self, winner):
+        view = ModalView(size_hint=(0.75, 0.5))
+        if winner == 'draw':
+            winner_label = Label(text='Нічия!', font_size=24)
+        elif winner == 2:
+            winner_label = Label(text=f'AI переміг!', font_size=24)
+        else:
+            winner_label = Label(text=f'Ви перемогли!', font_size=24)
+        view.add_widget(winner_label)
+        view.bind(on_dismiss=self.reset_game)
+        view.open()
 
-# Алгоритм Мінімакс
-def minimax(board, depth, is_maximizing):
-    if check_winner(board, "O"):
-        return 10 - depth, None
-    elif check_winner(board, "X"):
-        return depth - 10, None
-    elif len(get_possible_moves(board)) == 0:
-        return 0, None
+    def reset_game(self, instance):
+        self.board = TicTacToeBoard()
+        for button in self.buttons:
+            button.text = ''
+        self.current_player = 1
 
-    if is_maximizing:
-        best_score = -float("inf")
-        best_move = None
-        for move in get_possible_moves(board):
-            board[move[0]][move[1]] = "O"
-            score, _ = minimax(board, depth + 1, False)
-            board[move[0]][move[1]] = " "
-            if score > best_score:
-                best_score = score
-                best_move = move
-        return best_score, best_move
-    else:
-        best_score = float("inf")
-        best_move = None
-        for move in get_possible_moves(board):
-            board[move[0]][move[1]] = "X"
-            score, _ = minimax(board, depth + 1, True)
-            board[move[0]][move[1]] = " "
-            if score < best_score:
-                best_score = score
-                best_move = move
-        return best_score, best_move
 
-# Головна функція для виконання гри
-def main():
-    board = initialize_board()
-    display_board(board)
-
-    computer_starts = input("Хто починає перший? (комп'ютер (C) або гравець (P)): ").upper() == "C"
-    if computer_starts:
-        print("Комп'ютер починає перший.")
-    else:
-        print("Гравець починає перший.")
-
-    while True:
-        if computer_starts:
-            # Хід комп'ютера
-            print("Хід комп'ютера...")
-            computer_row, computer_col = computer_move(board)
-            board[computer_row][computer_col] = "O"
-            display_board(board)
-            if check_winner(board, "O"):
-                print("Комп'ютер переміг!")
-                break
-            if len(get_possible_moves(board)) == 0:
-                print("Нічия!")
-                break
-
-        # Хід гравця
-        player_row, player_col = player_move(board)
-        board[player_row][player_col] = "X"
-        display_board(board)
-        if check_winner(board, "X"):
-            print("Гравець переміг!")
-            break
-        if len(get_possible_moves(board)) == 0:
-            print("Нічия!")
-            break
-
-        if not computer_starts:
-            # Хід комп'ютера
-            print("Хід комп'ютера...")
-            computer_row, computer_col = computer_move(board)
-            board[computer_row][computer_col] = "O"
-            display_board(board)
-            if check_winner(board, "O"):
-                print("Комп'ютер переміг!")
-                break
-            if len(get_possible_moves(board)) == 0:
-                print("Нічия!")
-                break
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    TicTacToeApp().run()

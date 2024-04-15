@@ -1,12 +1,12 @@
 import math
 
 f = lambda x: 1 / (5 - 3 * math.cos(x))
-integral = lambda a, b: (math.atanh(2 * math.tanh(b / 2))) / 2 - (math.atanh(2 * math.tanh(a / 2))) / 2
 a = 0
 b = 2 * math.pi
 eps = 1e-5
 n = 8
 p = 2
+exact_integral = lambda a, b: (math.atanh(2 * math.tanh(b / 2))) / 2 - (math.atanh(2 * math.tanh(a / 2))) / 2
 
 
 def midpoint_rule(a, b, n, p, eps):
@@ -28,7 +28,7 @@ def midpoint_rule(a, b, n, p, eps):
         if abs(integral - pre_integral) < (2 ** p - 1) * eps:
             break
         result = integral + (integral - pre_integral) / (2 ** p - 1)
-        err = abs(integral - result)
+        err = abs(exact_integral(a, b) - result)
 
     return result, err, iteration
 
@@ -53,7 +53,7 @@ def trapezoidal_rule(a, b, n, p, eps):
         if abs(integral - pre_integral) < (2 ** p - 1) * eps:
             break
         result = integral + (integral - pre_integral) / (2 ** p - 1)
-        err = abs(integral - result)
+        err = abs(exact_integral(a, b) - result)
 
     return result, err, iteration
 
@@ -87,7 +87,7 @@ def simpson_rule(a, b, n, p, eps):
         if abs(integral - pre_integral) < (2 ** p - 1) * eps:
             break
         result = integral + (integral - pre_integral) / (2 ** p - 1)
-        err = abs(integral - result)
+        err = abs(exact_integral(a, b) - result)
 
     return result, err, iteration
 
