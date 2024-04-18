@@ -1,84 +1,100 @@
 package org.example.carparking.data;
 
-class CarParking {
-    private String brandModel;
-    private String licensePlate;
-    private String ownerPhone;
-    private int parkingHour;
-    private int prepaidHours;
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "parking_records")
+public class CarParking {
+    private String brand_model;
+    private String license_plate;
+    private String owner_phone;
+    private int parking_hour;
+    private int prepaid_hours;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     public CarParking() {
-        this.brandModel = "";
-        this.licensePlate = "";
-        this.ownerPhone = "";
-        this.parkingHour = 0;
-        this.prepaidHours = 0;
+        this.brand_model = "";
+        this.license_plate = "";
+        this.owner_phone = "";
+        this.parking_hour = 0;
+        this.prepaid_hours = 0;
     }
+
     public CarParking(String brandModel, String licensePlate, String ownerPhone, int parkingHour, int prepaidHours) {
-        this.brandModel = brandModel;
-        this.licensePlate = licensePlate;
-        this.ownerPhone = ownerPhone;
-        this.parkingHour = parkingHour;
-        this.prepaidHours = prepaidHours;
+        this.brand_model = brandModel;
+        this.license_plate = licensePlate;
+        this.owner_phone = ownerPhone;
+        this.parking_hour = parkingHour;
+        this.prepaid_hours = prepaidHours;
     }
 
-    public String getBrandModel() {
-        return brandModel;
+    public String getBrand_model() {
+        return brand_model;
     }
 
-    public void setBrandModel(String brandModel) {
-        this.brandModel = brandModel;
+    public void setBrand_model(String brandModel) {
+        this.brand_model = brandModel;
     }
 
-    public String getLicensePlate() {
-        return licensePlate;
+    public String getLicense_plate() {
+        return license_plate;
     }
 
-    public void setLicensePlate(String licensePlate) {
-        this.licensePlate = licensePlate;
+    public void setLicense_plate(String licensePlate) {
+        this.license_plate = licensePlate;
     }
 
-    public String getOwnerPhone() {
-        return ownerPhone;
+    public String getOwner_phone() {
+        return owner_phone;
     }
 
-    public void setOwnerPhone(String ownerPhone) {
-        this.ownerPhone = ownerPhone;
+    public void setOwner_phone(String ownerPhone) {
+        this.owner_phone = ownerPhone;
     }
 
-    public int getParkingHour() {
-        return parkingHour;
+    public int getParking_hour() {
+        return parking_hour;
     }
 
-    public void setParkingHour(int parkingHour) {
-        this.parkingHour = parkingHour;
+    public void setParking_hour(int parkingHour) {
+        this.parking_hour = parkingHour;
     }
 
-    public int getPrepaidHours() {
-        return prepaidHours;
+    public int getPrepaid_hours() {
+        return prepaid_hours;
     }
 
-    public void setPrepaidHours(int prepaidHours) {
-        this.prepaidHours = prepaidHours;
+    public void setPrepaid_hours(int prepaidHours) {
+        this.prepaid_hours = prepaidHours;
     }
 
     @Override
     public String toString() {
-        return "Car: " + brandModel + ", License Plate: " + licensePlate + ", Owner's Phone: " + ownerPhone +
-                ", Parking Hour: " + parkingHour + ", Prepaid Hours: " + prepaidHours;
+        return "Car: " + brand_model + ", License Plate: " + license_plate + ", Owner's Phone: " + owner_phone +
+                ", Parking Hour: " + parking_hour + ", Prepaid Hours: " + prepaid_hours;
     }
 
     public String toText() {
-        return brandModel + "," + licensePlate + "," + ownerPhone + "," + parkingHour + "," + prepaidHours;
+        return brand_model + "," + license_plate + "," + owner_phone + "," + parking_hour + "," + prepaid_hours;
     }
 
-    public static org.example.carparking.data.CarParking fromText(String line) {
+    public static CarParking fromText(String line) {
         String[] parts = line.split(",");
         if (parts.length == 5) {
-            return new org.example.carparking.data.CarParking(parts[0], parts[1], parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]));
+            return new CarParking(parts[0], parts[1], parts[2], Integer.parseInt(parts[3]), Integer.parseInt(parts[4]));
         } else {
             return null;
         }
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 }
 

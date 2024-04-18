@@ -1,4 +1,4 @@
-package org.example.carparking;
+package org.example.task_java;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

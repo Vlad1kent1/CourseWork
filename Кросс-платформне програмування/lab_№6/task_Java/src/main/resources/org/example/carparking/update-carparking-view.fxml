@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<AnchorPane prefHeight="299.0" prefWidth="396.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.carparking.controller.UpdateCarParkingController">
+    <children>
+        <VBox alignment="CENTER" layoutX="150.0" layoutY="14.0" prefHeight="200.0" prefWidth="200.0" spacing="15.0">
+            <children>
+                <TextField fx:id="brandModelInput" />
+                <TextField fx:id="licensePlateInput" />
+                <TextField fx:id="ownerPhoneInput" />
+                <TextField fx:id="parkingHourInput" />
+                <TextField fx:id="prepaidHourInput" />
+            </children>
+        </VBox>
+        <Button onAction="#onSubmitButtonPress" layoutX="148.0" layoutY="233.0" mnemonicParsing="false" prefHeight="34.0" prefWidth="100.0" text="Submit" />
+        <VBox alignment="CENTER" layoutX="50.0" layoutY="14.0" prefHeight="200.0" prefWidth="100.0" spacing="15.0">
+            <children>
+                <Label maxHeight="-Infinity" prefHeight="25.6" text="Brand Model" />
+                <Label layoutX="10.0" layoutY="10.0" prefHeight="25.6" text="License Plate" />
+                <Label layoutX="10.0" layoutY="28.0" prefHeight="25.6" text="Owner's Phone" />
+                <Label layoutX="10.0" layoutY="45.0" prefHeight="25.6" text="Parking Hour" />
+                <Label layoutX="10.0" layoutY="63.0" prefHeight="25.6" text="Prepaid Hour" />
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

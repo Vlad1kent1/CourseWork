@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
-
 <?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="org.example.carparking.MainController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-    </padding>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
 
-    <Label fx:id="welcomeText"/>
-    <Button text="Hello!" onAction="#onHelloButtonClick"/>
-</VBox>
+<AnchorPane maxHeight="350.0" maxWidth="450.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="350.0" prefWidth="450.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.carparking.controller.MainController">
+   <children>
+      <HBox alignment="CENTER" layoutX="5.0" layoutY="262.0" prefHeight="26.0" prefWidth="439.0" spacing="15.0">
+         <children>
+            <Button mnemonicParsing="false" onAction="#onAddButtonPress" text="Add" />
+          <Button mnemonicParsing="false" onAction="#onCheckByLicensePlateButtonPress" text="Check by License Plate" />
+            <Button mnemonicParsing="false" onAction="#onCheckDebtorsButtonPress" text="Check Debtors" />
+         </children>
+      </HBox>
+      <HBox alignment="CENTER" layoutX="69.0" layoutY="300.0" prefHeight="35.0" prefWidth="311.0" spacing="15.0">
+         <children>
+          <Button mnemonicParsing="false" onAction="#onUpdateButtonPress" prefWidth="60.0" text="Update" />
+            <Button mnemonicParsing="false" onAction="#onDeleteButtonPress" prefWidth="60.0" text="Delete" />
+         </children>
+      </HBox>
+      <ListView fx:id="carParkingList" layoutX="25.0" layoutY="33.0" prefHeight="200.0" prefWidth="400.0" />
+   </children>
+</AnchorPane>
