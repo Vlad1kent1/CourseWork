@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/CourseWork/static/css/main.f855e6bc.css",
+    "main.js": "/CourseWork/static/js/main.e681e5d0.js",
+    "index.html": "/CourseWork/index.html",
+    "main.f855e6bc.css.map": "/CourseWork/static/css/main.f855e6bc.css.map",
+    "main.e681e5d0.js.map": "/CourseWork/static/js/main.e681e5d0.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f855e6bc.css",
+    "static/js/main.e681e5d0.js"
+  ]
+}
