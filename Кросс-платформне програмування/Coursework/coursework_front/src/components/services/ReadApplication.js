@@ -1,5 +1,5 @@
 export const fetchApplications = (setApplication) => {
-    return fetch("http://localhost:8080/applications/read")
+    return fetch("https://coursework.test.azuremicroservices.io/spring-app-20240522080612/default/applications/read")
       .then((res) => res.json())
       .then((result) => {
         setApplication(result);

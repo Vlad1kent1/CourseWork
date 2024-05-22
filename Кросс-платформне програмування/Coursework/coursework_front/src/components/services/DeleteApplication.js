@@ -1,5 +1,5 @@
 export const deleteApplication = (id) => {
-    return fetch(`http://localhost:8080/applications/delete/${id}`, {
+    return fetch(`https://coursework.test.azuremicroservices.io/spring-app-20240522080612/default/applications/delete/${id}`, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json'

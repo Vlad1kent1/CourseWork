@@ -45,7 +45,6 @@ export default function SearchByFlightAndDate ({onSearch}) {
 
   const handleClick = () => {
     onSearch({ flightNumber, departureDate });
-    // Reset the fields after the search
     setFlightNumber('');
     setDepartureDate(null);
   };
